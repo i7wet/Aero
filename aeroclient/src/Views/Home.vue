@@ -4,7 +4,9 @@ import {ref} from 'vue'
 import Flight from "@/Models/Flight.js";
 import Airline from "@/Models/Airline.js";
 
+const modalActive = ref(false);
 let loading = ref(true);
+
 let flights = ref([]);
 let airlines = ref([]);
 let date = new Date();
@@ -12,14 +14,13 @@ let offset = Math.abs(date.getTimezoneOffset() / 60);
 
 let newFlight = new Flight('', '', '', new Airline('', '', ''))
 let selectedItemForChange = ref(new Flight('', '', '', new Airline('', '', '')));
-const modalActive = ref(false);
+
 
 const toggleModal = () => {
   modalActive.value = !modalActive.value;
 };
 
 function takeItemForChanged(item) {
-  console.log(item);
   selectedItemForChange.value = item;
   toggleModal();
 }
@@ -49,11 +50,19 @@ function convertJsonFlights(json) {
   }
   return array;
 }
+function convertJsonAirlines(json) {
+  let array = [];
+  for (let item of json) {
+    let airline = new Airline(item.id, item.fullName, item.iATACode)
+    array.push(airline)
+  }
+  return array;
+}
 
 async function takeAirlinesData() {
   try {
     let airlinesResponse = await fetch('http://localhost:5214/Airlines');
-    airlines.value = await airlinesResponse.json();
+    airlines.value = convertJsonAirlines(await airlinesResponse.json());
   } catch (error) {
     console.log(error)
   }
@@ -90,7 +99,7 @@ loadData();
     <p>Авиакомпания</p>
     <select v-model="newFlight.Airline.Id">
       <option disabled value="">Выберите</option>
-      <option v-for="airline in airlines" v-bind:value="airline.id">{{ airline.fullName }}</option>
+      <option v-for="airline in airlines" v-bind:value="airline.Id">{{ airline.FullName }}</option>
     </select>
     <button @click="sendData()" type="button" style="float: right">Добавить</button>
   </fieldset>

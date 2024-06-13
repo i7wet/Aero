@@ -1,60 +1,64 @@
-﻿<script>
+﻿<script setup>
 import {ref} from "vue";
+import Flight from "@/Models/Flight.js";
 
-export default {
-  props: ["modalActive", "airlines", "changedItem"],
-  setup(props, {emit}) {
-    let date = new Date(); 
-    let offset = Math.abs(date.getTimezoneOffset() / 60);
-    let newFlightNumber = ref('');
-    let newDepartureDate = ref('');
-    let newAirline = ref('');
-    const close = () => {
-      emit("close");
-    };
-    
-    async function updateData(){
-      try {
-        let fd = new FormData();
-        fd.append("Id", props.changedItem.Id)
-        if (newFlightNumber.value === ""){
-          fd.append("FlightNumber", props.changedItem.FlightNumber);
-        }
-        else {
-          fd.append("FlightNumber", newFlightNumber.value)
-        }
-        
-        if (newDepartureDate.value === ""){
-          let formattedOldDepartureDate = props.changedItem.DepartureDate;
-          formattedOldDepartureDate = formattedOldDepartureDate.replace("T", " ");
-          formattedOldDepartureDate = formattedOldDepartureDate.replace("Z", "");
-          fd.append("DepartureDate", formattedOldDepartureDate + "+0");
-        }
-        else {
-          fd.append("DepartureDate", newDepartureDate.value + "+" + offset);
-        }
-      
-        if (newAirline.value === ""){
-          fd.append("AirlineId", props.changedItem.Airline.Id);
-        }
-        else {
-          fd.append("AirlineId", newAirline.value);
-        }
 
-        await fetch('http://localhost:5214/Flights', {
-          method: "PUT",
-          body: fd
-        })
-        close();
-      }  catch (error) {
-        console.log(error);
-      }
-    }
-    
-    return {newDepartureDate, newFlightNumber, newAirline, close, updateData};
-  },
+const props = defineProps({
+  modalActive: Boolean,
+  airlines: Array,
+  changedItem: Flight
+});
+const emit = defineEmits(['close'])
+
+let date = new Date();
+let offset = Math.abs(date.getTimezoneOffset() / 60);
+let newFlightNumber = '';
+let newDepartureDate = '';
+const newAirline = defineModel({default: ''});
+const close = () => {
+  emit("close");
 };
 
+
+async function updateData() {
+  try {
+    let fd = new FormData();
+    fd.append("Id", props.changedItem.Id)
+    if (newFlightNumber === "") {
+      fd.append("FlightNumber", props.changedItem.FlightNumber);
+    } else {
+      fd.append("FlightNumber", newFlightNumber)
+    }
+
+    if (newDepartureDate === "") {
+      let formattedOldDepartureDate = props.changedItem.DepartureDate;
+      formattedOldDepartureDate = formattedOldDepartureDate.replace("T", " ");
+      formattedOldDepartureDate = formattedOldDepartureDate.replace("Z", "");
+      fd.append("DepartureDate", formattedOldDepartureDate + "+0");
+    } else {
+      fd.append("DepartureDate", newDepartureDate + "+" + offset);
+    }
+
+    if (newAirline.value === "") {
+      fd.append("AirlineId", props.changedItem.Airline.Id);
+    } else {
+      console.log(newAirline)
+      fd.append("AirlineId", newAirline.value);
+    }
+
+    await fetch('http://localhost:5214/Flights', {
+      method: "PUT",
+      body: fd
+    })
+    close();
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+
+//   return {newDepartureDate, newFlightNumber, newAirline, close, updateData};
+// },
 </script>
 
 <template>
@@ -67,11 +71,11 @@ export default {
             <div class="column">
               <h1>текущие значения</h1>
               <p>номер рейса</p>
-              <p>{{changedItem.FlightNumber}}</p>
+              <p>{{ changedItem.FlightNumber }}</p>
               <p>Время вылета</p>
-              <p>{{changedItem.DepartureDate}}</p>
+              <p>{{ changedItem.DepartureDate }}</p>
               <p>Авиакомпания</p>
-              <p>{{changedItem.Airline.FullName}}</p>
+              <p>{{ changedItem.Airline.FullName }}</p>
             </div>
 
             <div class="column">
@@ -83,10 +87,10 @@ export default {
               <p>Авиакомпания</p>
               <select v-model="newAirline">
                 <option disabled value="">Выберите</option>
-                <option v-for="item in airlines" v-bind:value="item.id">{{item.fullName}}</option>
+                <option v-for="item in airlines" v-bind:value="item.Id">{{ item.FullName }}</option>
               </select>
             </div>
-            
+
           </div>
           <slot/>
           <button @click="close" type="button">Закрыть</button>
@@ -106,6 +110,7 @@ export default {
 .column {
   width: 50%;
 }
+
 .modal {
   display: flex;
   justify-content: center;
